@@ -1,0 +1,30 @@
+class Conferencia {
+    private chairs: Array<Usuario>;
+    private revisores: Array<Usuario>;
+    private autores: Array<Usuario>;
+    private sesiones: Array<Track>;
+    //Faltan sesiones
+
+    public constructor(chairs: Array<Usuario>, revisores: Array<Usuario>, autores: Array<Usuario>) {
+        this.chairs = chairs;
+        this.revisores = revisores;
+        this.autores = autores;
+        this.sesiones = [];
+    }
+
+    public addSession(session: Track): void {
+        this.sesiones.push(session);
+    }
+
+    public getChairs(): Array<Usuario> {
+        return this.chairs;
+    }
+
+    public getRevisores(): Array<Usuario> {
+        return this.revisores;
+    }
+
+    public getAutores(): Array<Usuario> {
+        return this.autores;
+    }
+}
