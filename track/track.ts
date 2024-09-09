@@ -37,7 +37,20 @@ class Track {
     }
   }
 
-  public ordenarArticulos() {
+  private divideArticles(){
+    const numArticlesPerReviewer = this.calculateArticlesPerReviewer()
+    const surplus = this.calculateSurplus()
+  }
+
+  private calculateArticlesPerReviewer(){
+    return Math.floor((3*this.articulos.length)/this.revisores.length)
+  }
+
+  private calculateSurplus(){
+    return (3*this.articulos.length)%this.revisores.length
+  }
+
+  private ordenarArticulos() {
     const articulosOrdenados: Array<Articulo> = [];
     this.articulos.forEach((articulo) => {
       try {
@@ -94,6 +107,20 @@ class Track {
     } else {
       console.log("El articulo no existe en el track");
     }
+  }
+
+  public getArticulos(){
+    return this.articulos
+  }
+
+  public makeBid(user: Usuario, articulo: Articulo, interes: InteresState){
+    const index = this.articulos.findIndex((el)=>el === articulo)
+    this.articulos[index].makeBid(user, interes)
+  }
+
+  public modifyBid(user: Usuario, articulo: Articulo, interes: InteresState){
+    const index = this.articulos.findIndex((el)=>el === articulo)
+    this.articulos[index].modifyBid(user, interes)
   }
 
   private filtrarArticulo(articulo: Articulo): boolean {

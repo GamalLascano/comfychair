@@ -23,6 +23,24 @@ abstract class Articulo {
         return this.titulo;
     }
     
+    public makeBid(user: Usuario, interes: InteresState){
+        const newBid = new Bids(user, interes)
+        this.bids.push(newBid)
+    }
+
+    public modifyBid(user: Usuario, interes: InteresState){
+        var foundBid = this.bids.find((bid)=>{
+            user == bid.getRevisor()
+        })
+        if (foundBid == undefined){
+            throw new Error("The bid was not found")
+        }
+        const tempBidArray = this.bids.filter((bid)=>{bid !== foundBid})
+        foundBid.setInteres(interes)
+        tempBidArray.push(foundBid)
+        this.bids = tempBidArray
+    }
+
     public getAuthors(): Array<Usuario> {
         return this.autores;
     }

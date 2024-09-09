@@ -14,6 +14,11 @@ class Bids {
     public getInteres(): InteresState {
         return this.interes;
     }
+
+    public setInteres(interes: InteresState) {
+        this.interes = interes;
+    }
+    
 }
 
 enum InteresState {
