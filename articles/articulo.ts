@@ -45,6 +45,18 @@ abstract class Articulo {
         return this.autores;
     }
 
+    public getBids() {
+        return this.bids
+    }
+
+    public getRevisoresLength() {
+        return this.revisores.length
+    }
+
+    public setRevisores(users: Usuario[]) {
+        this.revisores=users
+    }
+    
     public setEstado(estado: ArticuloState): void {
         this.estado = estado
     }

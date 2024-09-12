@@ -27,6 +27,7 @@ class Track {
         break;
       case TrackState.BIDDING:
         this.estado = TrackState.ASIGNACION_REVISION;
+        this.divideArticles();
         break;
       case TrackState.ASIGNACION_REVISION:
         this.estado = TrackState.SELECCION;
@@ -40,6 +41,74 @@ class Track {
   private divideArticles(){
     const numArticlesPerReviewer = this.calculateArticlesPerReviewer()
     const surplus = this.calculateSurplus()
+    for (let i=0;i<this.articulos.length;i++){
+      var revisoresFinal: Array<Usuario> = []
+      this.articulos[i].getBids().forEach(bid=>{
+        if (bid.getInteres() == InteresState.INTERESADO && revisoresFinal.length<3){
+          var potRev = this.revisores.find((usr)=>usr.getEmail() == bid.getRevisor().getEmail())
+          if (potRev === undefined) {
+            throw Error("User mismatch")
+          }
+          const pos = this.revisores.findIndex((el)=>el===potRev)
+          const variance = pos < (surplus)  
+          const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
+          if (potRev.getReviewLength()<=numArticles){
+              potRev.addReview(this.articulos[i].getTitulo())
+              revisoresFinal.push(potRev)
+          }
+        }
+      })
+      if (revisoresFinal.length<=3){
+        this.articulos[i].getBids().forEach(bid=>{
+          if (bid.getInteres() == InteresState.QUIZAS && revisoresFinal.length<3){
+            var potRev = this.revisores.find((usr)=>usr.getEmail() == bid.getRevisor().getEmail())
+            if (potRev === undefined) {
+              throw Error("User mismatch")
+            }
+            const pos = this.revisores.findIndex((el)=>el===potRev)
+            const variance = pos < (surplus)  
+            const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
+            if (potRev.getReviewLength()<=numArticles){
+                potRev.addReview(this.articulos[i].getTitulo())
+                revisoresFinal.push(potRev)
+            }
+          }
+        })
+      }
+      if (revisoresFinal.length<=3){
+        const userFilter = this.articulos[i].getBids().map(el=>el.getRevisor().getEmail())
+        const filteredUsers = this.revisores.filter((el)=>userFilter.includes(el.getEmail()))
+        for (let j=0;j<filteredUsers.length;j++){
+          if (revisoresFinal.length<=3){
+            const pos = this.revisores.findIndex((el)=>el===filteredUsers[j])
+            const variance = pos < (surplus)  
+            const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
+            if (filteredUsers[j].getReviewLength()<=numArticles){
+                filteredUsers[j].addReview(this.articulos[i].getTitulo())
+                revisoresFinal.push(filteredUsers[j])
+            }
+          }
+        }
+      }
+      if (revisoresFinal.length<=3){
+        this.articulos[i].getBids().forEach(bid=>{
+          if (bid.getInteres() == InteresState.NO_INTERESADO && revisoresFinal.length<3){
+            var potRev = this.revisores.find((usr)=>usr.getEmail() == bid.getRevisor().getEmail())
+            if (potRev === undefined) {
+              throw Error("User mismatch")
+            }
+            const pos = this.revisores.findIndex((el)=>el===potRev)
+            const variance = pos < (surplus)  
+            const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
+            if (potRev.getReviewLength()<=numArticles){
+                potRev.addReview(this.articulos[i].getTitulo())
+                revisoresFinal.push(potRev)
+            }
+          }
+        })
+      }
+      this.articulos[i].setRevisores(revisoresFinal)
+    }
   }
 
   private calculateArticlesPerReviewer(){
@@ -78,7 +147,6 @@ class Track {
       (art) => art.getTitulo() === articulo.getTitulo()
     );
     if (foundArticle) {
-      //Remove article from articulos array
       this.articulos = this.articulos.filter((art) => art === foundArticle);
     }
     if (this.filtrarArticulo(articulo)) {
