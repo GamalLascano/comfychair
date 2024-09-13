@@ -2,13 +2,14 @@ class Track {
   private articulos: Array<Articulo>;
   private deadline: Date;
   private estado: TrackState;
-  private maxArticulos: Number;
+  private maxArticulos: number;
   private revisores: Array<Usuario>;
   private formaSeleccion: FormaSeleccionEnum;
+  private numeroFiltro: number;
 
   public constructor(
     deadline: Date,
-    maxArticulos: Number,
+    maxArticulos: number,
     formaSeleccion: FormaSeleccionEnum
   ) {
     this.deadline = deadline;
@@ -17,6 +18,7 @@ class Track {
     this.estado = TrackState.RECEPCION;
     this.articulos = [];
     this.revisores = [];
+    this.numeroFiltro = 0;
   }
 
   public avanzarEstado(): void {
@@ -31,6 +33,7 @@ class Track {
         break;
       case TrackState.ASIGNACION_REVISION:
         this.estado = TrackState.SELECCION;
+        this.seleccionarArticulos();
         break;
       case TrackState.SELECCION:
         console.log("Ya se llego al ultimo estado");
@@ -38,85 +41,114 @@ class Track {
     }
   }
 
-  private divideArticles(){
-    const numArticlesPerReviewer = this.calculateArticlesPerReviewer()
-    const surplus = this.calculateSurplus()
-    for (let i=0;i<this.articulos.length;i++){
-      var revisoresFinal: Array<Usuario> = []
-      this.articulos[i].getBids().forEach(bid=>{
-        if (bid.getInteres() == InteresState.INTERESADO && revisoresFinal.length<3){
-          var potRev = this.revisores.find((usr)=>usr.getEmail() == bid.getRevisor().getEmail())
+  private divideArticles() {
+    const numArticlesPerReviewer = this.calculateArticlesPerReviewer();
+    const surplus = this.calculateSurplus();
+    for (let i = 0; i < this.articulos.length; i++) {
+      var revisoresFinal: Array<Usuario> = [];
+      this.articulos[i].getBids().forEach((bid) => {
+        if (
+          bid.getInteres() == InteresState.INTERESADO &&
+          revisoresFinal.length < this.maxArticulos
+        ) {
+          var potRev = this.revisores.find(
+            (usr) => usr.getEmail() == bid.getRevisor().getEmail()
+          );
           if (potRev === undefined) {
-            throw Error("User mismatch")
+            throw Error("User mismatch");
           }
-          const pos = this.revisores.findIndex((el)=>el===potRev)
-          const variance = pos < (surplus)  
-          const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
-          if (potRev.getReviewLength()<=numArticles){
-              potRev.addReview(this.articulos[i].getTitulo())
-              revisoresFinal.push(potRev)
-          }
-        }
-      })
-      if (revisoresFinal.length<=3){
-        this.articulos[i].getBids().forEach(bid=>{
-          if (bid.getInteres() == InteresState.QUIZAS && revisoresFinal.length<3){
-            var potRev = this.revisores.find((usr)=>usr.getEmail() == bid.getRevisor().getEmail())
-            if (potRev === undefined) {
-              throw Error("User mismatch")
-            }
-            const pos = this.revisores.findIndex((el)=>el===potRev)
-            const variance = pos < (surplus)  
-            const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
-            if (potRev.getReviewLength()<=numArticles){
-                potRev.addReview(this.articulos[i].getTitulo())
-                revisoresFinal.push(potRev)
-            }
-          }
-        })
-      }
-      if (revisoresFinal.length<=3){
-        const userFilter = this.articulos[i].getBids().map(el=>el.getRevisor().getEmail())
-        const filteredUsers = this.revisores.filter((el)=>userFilter.includes(el.getEmail()))
-        for (let j=0;j<filteredUsers.length;j++){
-          if (revisoresFinal.length<=3){
-            const pos = this.revisores.findIndex((el)=>el===filteredUsers[j])
-            const variance = pos < (surplus)  
-            const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
-            if (filteredUsers[j].getReviewLength()<=numArticles){
-                filteredUsers[j].addReview(this.articulos[i].getTitulo())
-                revisoresFinal.push(filteredUsers[j])
-            }
+          const pos = this.revisores.findIndex((el) => el === potRev);
+          const variance = pos < surplus;
+          const numArticles = variance
+            ? numArticlesPerReviewer + 1
+            : numArticlesPerReviewer;
+          if (potRev.getReviewLength() <= numArticles) {
+            potRev.addReview(this.articulos[i].getTitulo());
+            revisoresFinal.push(potRev);
           }
         }
-      }
-      if (revisoresFinal.length<=3){
-        this.articulos[i].getBids().forEach(bid=>{
-          if (bid.getInteres() == InteresState.NO_INTERESADO && revisoresFinal.length<3){
-            var potRev = this.revisores.find((usr)=>usr.getEmail() == bid.getRevisor().getEmail())
+      });
+      if (revisoresFinal.length <= this.maxArticulos) {
+        this.articulos[i].getBids().forEach((bid) => {
+          if (
+            bid.getInteres() == InteresState.QUIZAS &&
+            revisoresFinal.length < this.maxArticulos
+          ) {
+            var potRev = this.revisores.find(
+              (usr) => usr.getEmail() == bid.getRevisor().getEmail()
+            );
             if (potRev === undefined) {
-              throw Error("User mismatch")
+              throw Error("User mismatch");
             }
-            const pos = this.revisores.findIndex((el)=>el===potRev)
-            const variance = pos < (surplus)  
-            const numArticles = variance ? numArticlesPerReviewer + 1 : numArticlesPerReviewer
-            if (potRev.getReviewLength()<=numArticles){
-                potRev.addReview(this.articulos[i].getTitulo())
-                revisoresFinal.push(potRev)
+            const pos = this.revisores.findIndex((el) => el === potRev);
+            const variance = pos < surplus;
+            const numArticles = variance
+              ? numArticlesPerReviewer + 1
+              : numArticlesPerReviewer;
+            if (potRev.getReviewLength() <= numArticles) {
+              potRev.addReview(this.articulos[i].getTitulo());
+              revisoresFinal.push(potRev);
             }
           }
-        })
+        });
       }
-      this.articulos[i].setRevisores(revisoresFinal)
+      if (revisoresFinal.length <= this.maxArticulos) {
+        const userFilter = this.articulos[i]
+          .getBids()
+          .map((el) => el.getRevisor().getEmail());
+        const filteredUsers = this.revisores.filter((el) =>
+          userFilter.includes(el.getEmail())
+        );
+        for (let j = 0; j < filteredUsers.length; j++) {
+          if (revisoresFinal.length <= this.maxArticulos) {
+            const pos = this.revisores.findIndex(
+              (el) => el === filteredUsers[j]
+            );
+            const variance = pos < surplus;
+            const numArticles = variance
+              ? numArticlesPerReviewer + 1
+              : numArticlesPerReviewer;
+            if (filteredUsers[j].getReviewLength() <= numArticles) {
+              filteredUsers[j].addReview(this.articulos[i].getTitulo());
+              revisoresFinal.push(filteredUsers[j]);
+            }
+          }
+        }
+      }
+      if (revisoresFinal.length <= this.maxArticulos) {
+        this.articulos[i].getBids().forEach((bid) => {
+          if (
+            bid.getInteres() == InteresState.NO_INTERESADO &&
+            revisoresFinal.length < this.maxArticulos
+          ) {
+            var potRev = this.revisores.find(
+              (usr) => usr.getEmail() == bid.getRevisor().getEmail()
+            );
+            if (potRev === undefined) {
+              throw Error("User mismatch");
+            }
+            const pos = this.revisores.findIndex((el) => el === potRev);
+            const variance = pos < surplus;
+            const numArticles = variance
+              ? numArticlesPerReviewer + 1
+              : numArticlesPerReviewer;
+            if (potRev.getReviewLength() <= numArticles) {
+              potRev.addReview(this.articulos[i].getTitulo());
+              revisoresFinal.push(potRev);
+            }
+          }
+        });
+      }
+      this.articulos[i].setRevisores(revisoresFinal);
     }
   }
 
-  private calculateArticlesPerReviewer(){
-    return Math.floor((3*this.articulos.length)/this.revisores.length)
+  private calculateArticlesPerReviewer() {
+    return Math.floor((3 * this.articulos.length) / this.revisores.length);
   }
 
-  private calculateSurplus(){
-    return (3*this.articulos.length)%this.revisores.length
+  private calculateSurplus() {
+    return (3 * this.articulos.length) % this.revisores.length;
   }
 
   private ordenarArticulos() {
@@ -139,6 +171,46 @@ class Track {
     this.articulos = articulosOrdenados;
   }
 
+  private seleccionarArticulos() {
+    switch (this.formaSeleccion) {
+      case FormaSeleccionEnum.CORTE_FIJO:
+        this.filtrarCorteFijo();
+        break;
+      case FormaSeleccionEnum.MEJORES:
+        this.filtrarMejores();
+        break;
+    }
+  }
+
+  private filtrarCorteFijo() {
+    const articulosOrdenados = this.articulos.sort(
+      (act, ant) => act.getPuntaje() - ant.getPuntaje()
+    );
+    const numeroDeAceptados = Math.round(
+      (this.numeroFiltro * this.articulos.length) / 100
+    );
+    const articulosAceptados: Articulo[] = [];
+    articulosOrdenados.forEach((art) => {
+      if (articulosAceptados.length < numeroDeAceptados) {
+        articulosAceptados.push(art);
+      }
+    });
+    this.articulos = articulosAceptados;
+  }
+
+  private filtrarMejores() {
+    const articulosOrdenados = this.articulos.sort(
+      (act, ant) => act.getPuntaje() - ant.getPuntaje()
+    );
+    const articulosAceptados: Articulo[] = [];
+    articulosOrdenados.forEach((art) => {
+      if (art.getPuntaje() > this.numeroFiltro) {
+        articulosAceptados.push(art);
+      }
+    });
+    this.articulos = articulosAceptados;
+  }
+
   public agregarArticulo(articulo: Articulo, day: Date = new Date()) {
     if (day > this.deadline) {
       throw new Error("No more articles are accepted at this stage");
@@ -155,6 +227,10 @@ class Track {
       articulo.setEstado(ArticuloState.RECHAZADO);
     }
     this.articulos.push(articulo);
+  }
+
+  public setearPorcentaje(porcentaje: number) {
+    this.numeroFiltro = porcentaje;
   }
 
   public editarArticulo(articulo: Articulo, day: Date = new Date()) {
@@ -177,18 +253,18 @@ class Track {
     }
   }
 
-  public getArticulos(){
-    return this.articulos
+  public getArticulos() {
+    return this.articulos;
   }
 
-  public makeBid(user: Usuario, articulo: Articulo, interes: InteresState){
-    const index = this.articulos.findIndex((el)=>el === articulo)
-    this.articulos[index].makeBid(user, interes)
+  public makeBid(user: Usuario, articulo: Articulo, interes: InteresState) {
+    const index = this.articulos.findIndex((el) => el === articulo);
+    this.articulos[index].makeBid(user, interes);
   }
 
-  public modifyBid(user: Usuario, articulo: Articulo, interes: InteresState){
-    const index = this.articulos.findIndex((el)=>el === articulo)
-    this.articulos[index].modifyBid(user, interes)
+  public modifyBid(user: Usuario, articulo: Articulo, interes: InteresState) {
+    const index = this.articulos.findIndex((el) => el === articulo);
+    this.articulos[index].modifyBid(user, interes);
   }
 
   private filtrarArticulo(articulo: Articulo): boolean {
