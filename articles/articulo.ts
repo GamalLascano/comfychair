@@ -1,4 +1,8 @@
-abstract class Articulo {
+import Usuario from "../user/usuario";
+import { Bids, InteresState } from "./bids/bids";
+import Revision from "./review/revision";
+
+export abstract class Articulo {
   private titulo: string;
   private adjunto: string;
   private bids: Array<Bids>;
@@ -94,7 +98,7 @@ abstract class Articulo {
   }
 }
 
-enum ArticuloState {
+export enum ArticuloState {
   RECIBIDO = "Recibido",
   RECHAZADO = "Rechazado",
   BIDDING = "Bidding",

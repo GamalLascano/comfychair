@@ -1,30 +1,38 @@
+import Track from "../track/track";
+import Usuario from "../user/usuario";
+
 class Conferencia {
-    private chairs: Array<Usuario>;
-    private revisores: Array<Usuario>;
-    private autores: Array<Usuario>;
-    private sesiones: Array<Track>;
-    //Faltan sesiones
+  private chairs: Array<Usuario>;
+  private revisores: Array<Usuario>;
+  private autores: Array<Usuario>;
+  private sesiones: Array<Track>;
 
-    public constructor(chairs: Array<Usuario>, revisores: Array<Usuario>, autores: Array<Usuario>) {
-        this.chairs = chairs;
-        this.revisores = revisores;
-        this.autores = autores;
-        this.sesiones = [];
-    }
+  public constructor(
+    chairs: Array<Usuario>,
+    revisores: Array<Usuario>,
+    autores: Array<Usuario>
+  ) {
+    this.chairs = chairs;
+    this.revisores = revisores;
+    this.autores = autores;
+    this.sesiones = [];
+  }
 
-    public addSession(session: Track): void {
-        this.sesiones.push(session);
-    }
+  public addSession(session: Track): void {
+    this.sesiones.push(session);
+  }
 
-    public getChairs(): Array<Usuario> {
-        return this.chairs;
-    }
+  public getChairs(): Array<Usuario> {
+    return this.chairs;
+  }
 
-    public getRevisores(): Array<Usuario> {
-        return this.revisores;
-    }
+  public getRevisores(): Array<Usuario> {
+    return this.revisores;
+  }
 
-    public getAutores(): Array<Usuario> {
-        return this.autores;
-    }
+  public getAutores(): Array<Usuario> {
+    return this.autores;
+  }
 }
+
+export default Conferencia;

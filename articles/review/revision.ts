@@ -1,3 +1,5 @@
+import Usuario from "../../user/usuario";
+
 class Revision {
   private revisor: Usuario;
   private calificacion: number;
@@ -25,3 +27,4 @@ class Revision {
     return this.descripcion;
   }
 }
+export default Revision;

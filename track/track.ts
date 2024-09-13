@@ -1,3 +1,7 @@
+import { Articulo, ArticuloState } from "../articles/articulo";
+import { InteresState } from "../articles/bids/bids";
+import Usuario from "../user/usuario";
+
 class Track {
   private articulos: Array<Articulo>;
   private deadline: Date;
@@ -298,3 +302,5 @@ enum FormaSeleccionEnum {
   CORTE_FIJO = "Corte Fijo",
   MEJORES = "Mejores",
 }
+
+export default Track;

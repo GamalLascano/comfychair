@@ -1,28 +1,29 @@
-class Bids {
-    private revisor: Usuario;
-    private interes: InteresState;
+import Usuario from "../../user/usuario";
 
-    public constructor(revisor: Usuario, interes: InteresState) {
-        this.revisor = revisor;
-        this.interes = interes;
-    }
+export class Bids {
+  private revisor: Usuario;
+  private interes: InteresState;
 
-    public getRevisor(): Usuario {
-        return this.revisor;
-    }
+  public constructor(revisor: Usuario, interes: InteresState) {
+    this.revisor = revisor;
+    this.interes = interes;
+  }
 
-    public getInteres(): InteresState {
-        return this.interes;
-    }
+  public getRevisor(): Usuario {
+    return this.revisor;
+  }
 
-    public setInteres(interes: InteresState) {
-        this.interes = interes;
-    }
-    
+  public getInteres(): InteresState {
+    return this.interes;
+  }
+
+  public setInteres(interes: InteresState) {
+    this.interes = interes;
+  }
 }
 
-enum InteresState {
-    INTERESADO = "Interesado",
-    NO_INTERESADO = "No interesado",
-    QUIZAS = "Quizas"
+export enum InteresState {
+  INTERESADO = "Interesado",
+  NO_INTERESADO = "No interesado",
+  QUIZAS = "Quizas",
 }
