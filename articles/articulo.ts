@@ -96,6 +96,10 @@ export abstract class Articulo {
   public setEstado(estado: ArticuloState): void {
     this.estado = estado;
   }
+
+  public getEstado(){
+    return this.estado;
+  }
 }
 
 export enum ArticuloState {

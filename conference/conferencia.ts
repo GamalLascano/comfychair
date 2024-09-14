@@ -22,6 +22,10 @@ class Conferencia {
     this.sesiones.push(session);
   }
 
+  public getSessions() {
+    return this.sesiones
+  }
+  
   public getChairs(): Array<Usuario> {
     return this.chairs;
   }

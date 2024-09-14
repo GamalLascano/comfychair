@@ -1,8 +1,11 @@
 import { Articulo, ArticuloState } from "../articles/articulo";
+import { ArticuloRegular } from "../articles/articuloRegular";
 import { InteresState } from "../articles/bids/bids";
 import Usuario from "../user/usuario";
+import { ProjectUtils } from "../utils/projectUtils";
 
 class Track {
+  private nombre: string;
   private articulos: Array<Articulo>;
   private deadline: Date;
   private estado: TrackState;
@@ -12,10 +15,12 @@ class Track {
   private numeroFiltro: number;
 
   public constructor(
+    nombre: string,
     deadline: Date,
     maxArticulos: number,
     formaSeleccion: FormaSeleccionEnum
   ) {
+    this.nombre = nombre;
     this.deadline = deadline;
     this.maxArticulos = maxArticulos;
     this.formaSeleccion = formaSeleccion;
@@ -271,14 +276,13 @@ class Track {
     this.articulos[index].modifyBid(user, interes);
   }
 
+  //Agregar cosas de extension
   private filtrarArticulo(articulo: Articulo): boolean {
     var verify = this.verifyGeneric(articulo);
     if (articulo instanceof ArticuloRegular) {
       console.log("Es de tipo Articulo Regular");
       verify = verify && this.verifyRegular(articulo);
-    } else {
-      throw new Error("Tipo de articulo no valido");
-    }
+    } 
     return verify;
   }
 
@@ -289,6 +293,11 @@ class Track {
   private verifyGeneric(poster: Articulo): boolean {
     return poster.getTitulo() != null && poster.getAuthors().length > 0;
   }
+
+  public getNombre(){
+    return this.nombre;
+  }
+
 }
 
 enum TrackState {
@@ -298,7 +307,7 @@ enum TrackState {
   SELECCION = "Seleccion",
 }
 
-enum FormaSeleccionEnum {
+export enum FormaSeleccionEnum {
   CORTE_FIJO = "Corte Fijo",
   MEJORES = "Mejores",
 }

@@ -1,4 +1,7 @@
-class ArticuloRegular extends Articulo{
+import Usuario from "../user/usuario";
+import { Articulo } from "./articulo";
+
+export class ArticuloRegular extends Articulo{
     private abstract: string;
 
     public constructor(titulo: string, adjunto: string, autores: Array<Usuario>, autorNotificado: Usuario, abstract: string) {
