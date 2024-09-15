@@ -3,6 +3,7 @@ import { ArticuloRegular } from "../articles/articuloRegular";
 import { InteresState } from "../articles/bids/bids";
 import Usuario from "../user/usuario";
 import { ProjectUtils } from "../utils/projectUtils";
+import { Strategy } from "./strategy/strategy";
 
 class Track {
   private nombre: string;
@@ -11,14 +12,13 @@ class Track {
   private estado: TrackState;
   private maxArticulos: number;
   private revisores: Array<Usuario>;
-  private formaSeleccion: FormaSeleccionEnum;
-  private numeroFiltro: number;
+  private formaSeleccion: Strategy;
 
   public constructor(
     nombre: string,
     deadline: Date,
     maxArticulos: number,
-    formaSeleccion: FormaSeleccionEnum
+    formaSeleccion: Strategy
   ) {
     this.nombre = nombre;
     this.deadline = deadline;
@@ -27,7 +27,6 @@ class Track {
     this.estado = TrackState.RECEPCION;
     this.articulos = [];
     this.revisores = [];
-    this.numeroFiltro = 0;
   }
 
   public avanzarEstado(): void {
@@ -181,43 +180,7 @@ class Track {
   }
 
   private seleccionarArticulos() {
-    switch (this.formaSeleccion) {
-      case FormaSeleccionEnum.CORTE_FIJO:
-        this.filtrarCorteFijo();
-        break;
-      case FormaSeleccionEnum.MEJORES:
-        this.filtrarMejores();
-        break;
-    }
-  }
-
-  private filtrarCorteFijo() {
-    const articulosOrdenados = this.articulos.sort(
-      (act, ant) => act.getPuntaje() - ant.getPuntaje()
-    );
-    const numeroDeAceptados = Math.round(
-      (this.numeroFiltro * this.articulos.length) / 100
-    );
-    const articulosAceptados: Articulo[] = [];
-    articulosOrdenados.forEach((art) => {
-      if (articulosAceptados.length < numeroDeAceptados) {
-        articulosAceptados.push(art);
-      }
-    });
-    this.articulos = articulosAceptados;
-  }
-
-  private filtrarMejores() {
-    const articulosOrdenados = this.articulos.sort(
-      (act, ant) => act.getPuntaje() - ant.getPuntaje()
-    );
-    const articulosAceptados: Articulo[] = [];
-    articulosOrdenados.forEach((art) => {
-      if (art.getPuntaje() > this.numeroFiltro) {
-        articulosAceptados.push(art);
-      }
-    });
-    this.articulos = articulosAceptados;
+    this.articulos = this.formaSeleccion.filter(this.articulos);
   }
 
   public agregarArticulo(articulo: Articulo, day: Date = new Date()) {
@@ -228,7 +191,7 @@ class Track {
       (art) => art.getTitulo() === articulo.getTitulo()
     );
     if (foundArticle) {
-      this.articulos = this.articulos.filter((art) => art === foundArticle);
+      this.articulos = this.articulos.filter((art) => art !== foundArticle);
     }
     if (this.filtrarArticulo(articulo)) {
       articulo.setEstado(ArticuloState.RECIBIDO);
@@ -236,10 +199,6 @@ class Track {
       articulo.setEstado(ArticuloState.RECHAZADO);
     }
     this.articulos.push(articulo);
-  }
-
-  public setearPorcentaje(porcentaje: number) {
-    this.numeroFiltro = porcentaje;
   }
 
   public editarArticulo(articulo: Articulo, day: Date = new Date()) {
@@ -250,7 +209,7 @@ class Track {
       (art) => art.getTitulo() === articulo.getTitulo()
     );
     if (foundArticle) {
-      this.articulos = this.articulos.filter((art) => art === foundArticle);
+      this.articulos = this.articulos.filter((art) => art !== foundArticle);
       if (this.filtrarArticulo(articulo)) {
         articulo.setEstado(ArticuloState.RECIBIDO);
       } else {
@@ -282,7 +241,7 @@ class Track {
     if (articulo instanceof ArticuloRegular) {
       console.log("Es de tipo Articulo Regular");
       verify = verify && this.verifyRegular(articulo);
-    } 
+    }
     return verify;
   }
 
@@ -294,10 +253,9 @@ class Track {
     return poster.getTitulo() != null && poster.getAuthors().length > 0;
   }
 
-  public getNombre(){
+  public getNombre() {
     return this.nombre;
   }
-
 }
 
 enum TrackState {
@@ -305,11 +263,6 @@ enum TrackState {
   BIDDING = "Bidding",
   ASIGNACION_REVISION = "Asignacion y Revision",
   SELECCION = "Seleccion",
-}
-
-export enum FormaSeleccionEnum {
-  CORTE_FIJO = "Corte Fijo",
-  MEJORES = "Mejores",
 }
 
 export default Track;

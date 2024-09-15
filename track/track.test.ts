@@ -1,10 +1,11 @@
 import { expect, jest, test } from "@jest/globals";
 import Usuario from "../user/usuario";
 import Conferencia from "../conference/conferencia";
-import Track, { FormaSeleccionEnum } from "./track";
+import Track from "./track";
 import { ArticuloRegular } from "../articles/articuloRegular";
 import { ArticuloState } from "../articles/articulo";
 import { ArticuloPoster } from "../articles/articuloPoster";
+import { CorteFijoStrategy } from "./strategy/corteFijoStrategy";
 
 test("Crear conferencia", () => {
   const conferencia = crearConferencia();
@@ -14,64 +15,201 @@ test("Crear conferencia", () => {
 });
 
 test("Crear Track", () => {
-  const fecha = new Date("24-06-2025")
-  const newTrack = new Track("Session acerca de AI",fecha,3,FormaSeleccionEnum.CORTE_FIJO)
+  const fecha = new Date("24-06-2025");
+  const newTrack = new Track(
+    "Session acerca de AI",
+    fecha,
+    3,
+    new CorteFijoStrategy(30)
+  );
   const conferencia = crearConferencia();
-  conferencia.addSession(newTrack)
-  const index = conferencia.getSessions().findIndex(el=>el.getNombre() == "Session acerca de AI")
-  expect(index).toBeGreaterThan(-1)
+  conferencia.addSession(newTrack);
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  expect(index).toBeGreaterThan(-1);
 });
 
 test("Crear Track y agregar articulos", () => {
-  const conferencia = baseSetup()
-  const index = conferencia.getSessions().findIndex(el=>el.getNombre() == "Session acerca de AI")
-  expect(conferencia.getSessions()[index].getArticulos().length).toBe(4)
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  expect(conferencia.getSessions()[index].getArticulos().length).toBe(4);
 });
 
 test("Crear Track con articulos y probar estados", () => {
-  const conferencia = baseSetup()
-  const index = conferencia.getSessions().findIndex(el=>el.getNombre() == "Session acerca de AI")
-  const articulo1 = conferencia.getSessions()[index].getArticulos()[0]
-  const articulo2 = conferencia.getSessions()[index].getArticulos()[1]
-  const articulo3 = conferencia.getSessions()[index].getArticulos()[2]
-  const articulo4 = conferencia.getSessions()[index].getArticulos()[3]
-  conferencia.getSessions()[index].agregarArticulo(new ArticuloPoster("Paper 5","adjunto 5",conferencia.getAutores(),conferencia.getAutores()[2],"segundo adjunto"))
-  const articulo5 = conferencia.getSessions()[index].getArticulos()[4]
-  const artPasado = crearArticulo("Paper rechazable","adjunto", conferencia.getAutores(), conferencia.getAutores()[0], ABSTRACT_GENERAL);
-  expect(articulo1.getEstado()).toBe(ArticuloState.RECIBIDO)
-  expect(articulo2.getEstado()).toBe(ArticuloState.RECIBIDO)
-  expect(articulo3.getEstado()).toBe(ArticuloState.RECHAZADO)
-  expect(articulo4.getEstado()).toBe(ArticuloState.RECHAZADO)
-  expect(articulo5.getEstado()).toBe(ArticuloState.RECIBIDO)
-  const testFunction = ()=>{
-    conferencia.getSessions()[index].agregarArticulo(artPasado,new Date("07/24/2025"))
-  }
-  expect(testFunction).toThrowError("No more articles are accepted at this stage")
-})
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  const articulo1 = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2 = conferencia.getSessions()[index].getArticulos()[1];
+  const articulo3 = conferencia.getSessions()[index].getArticulos()[2];
+  const articulo4 = conferencia.getSessions()[index].getArticulos()[3];
+  conferencia
+    .getSessions()
+    [index].agregarArticulo(
+      new ArticuloPoster(
+        "Paper 5",
+        "adjunto 5",
+        conferencia.getAutores(),
+        conferencia.getAutores()[2],
+        "segundo adjunto"
+      )
+    );
+  const articulo5 = conferencia.getSessions()[index].getArticulos()[4];
+  const artPasado = crearArticulo(
+    "Paper rechazable",
+    "adjunto",
+    conferencia.getAutores(),
+    conferencia.getAutores()[0],
+    ABSTRACT_GENERAL
+  );
+  expect(articulo1.getEstado()).toBe(ArticuloState.RECIBIDO);
+  expect(articulo2.getEstado()).toBe(ArticuloState.RECIBIDO);
+  expect(articulo3.getEstado()).toBe(ArticuloState.RECHAZADO);
+  expect(articulo4.getEstado()).toBe(ArticuloState.RECHAZADO);
+  expect(articulo5.getEstado()).toBe(ArticuloState.RECIBIDO);
+  const testFunction = () => {
+    conferencia
+      .getSessions()
+      [index].agregarArticulo(artPasado, new Date("07/24/2025"));
+  };
+  expect(testFunction).toThrowError(
+    "No more articles are accepted at this stage"
+  );
+});
 
-function baseSetup(){
-  const fecha = new Date("06/24/2025")
-  const newTrack = new Track("Session acerca de AI",fecha,3,FormaSeleccionEnum.CORTE_FIJO)
+test("Crear Track con articulos y editar articulo", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  const articulo3 = conferencia.getSessions()[index].getArticulos()[2];
+  if (articulo3 instanceof ArticuloRegular) {
+    articulo3.setAbstract(ABSTRACT_GENERAL);
+  }
+  expect(articulo3.getEstado()).toBe(ArticuloState.RECHAZADO);
+  conferencia
+    .getSessions()
+    [index].editarArticulo(articulo3, new Date("06/25/2024"));
+  const a3rIndex = conferencia
+    .getSessions()
+    [index].getArticulos()
+    .findIndex((el) => el.getTitulo() == articulo3.getTitulo());
+  const a3r = conferencia.getSessions()[index].getArticulos()[a3rIndex];
+  expect(a3r.getEstado()).toBe(ArticuloState.RECIBIDO);
+});
+
+test("Crear Track con articulos y editar articulo fuera de tiempo", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  const articulo3 = conferencia.getSessions()[index].getArticulos()[2];
+  if (articulo3 instanceof ArticuloRegular) {
+    articulo3.setAbstract(ABSTRACT_GENERAL);
+  }
+  expect(articulo3.getEstado()).toBe(ArticuloState.RECHAZADO);
+  const editarError = () => {
+    conferencia
+      .getSessions()
+      [index].editarArticulo(articulo3, new Date("06/25/2027"));
+  };
+
+  expect(editarError).toThrowError("You cannot edit this article anymore");
+});
+
+test("Crear Track con articulos y pasar a bidding", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  const articulo1 = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2 = conferencia.getSessions()[index].getArticulos()[1];
+  const articulo3 = conferencia.getSessions()[index].getArticulos()[2];
+  const articulo4 = conferencia.getSessions()[index].getArticulos()[3];
+  expect(articulo1.getEstado()).toBe(ArticuloState.RECIBIDO);
+  expect(articulo2.getEstado()).toBe(ArticuloState.RECIBIDO);
+  expect(articulo3.getEstado()).toBe(ArticuloState.RECHAZADO);
+  expect(articulo4.getEstado()).toBe(ArticuloState.RECHAZADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2S = conferencia.getSessions()[index].getArticulos()[1];
+  expect(conferencia.getSessions()[index].getArticulos().length).toBe(2);
+  expect(articulo1S.getEstado()).toBe(ArticuloState.BIDDING);
+  expect(articulo2S.getEstado()).toBe(ArticuloState.BIDDING);
+});
+
+function baseSetup() {
+  const fecha = new Date("06/24/2025");
+  const newTrack = new Track(
+    "Session acerca de AI",
+    fecha,
+    3,
+    new CorteFijoStrategy(30)
+  );
   const conferencia = crearConferencia();
-  conferencia.addSession(newTrack)
-  const index = conferencia.getSessions().findIndex(el=>el.getNombre() == "Session acerca de AI")
-  const atr1 = conferencia.getAutores().slice(1,2)
-  const atr2 = conferencia.getAutores().slice(1,3)
-  const atr3 = conferencia.getAutores().slice(0,1)
-  const art1 = crearArticulo("Paper 1","adjunto", atr1, atr1[0], ABSTRACT_GENERAL);
-  const art2 = crearArticulo("Paper 2","adjunto 2", atr2, atr2[0], ABSTRACT_GENERAL);
-  const art3 = crearArticulo("Paper 3","adjunto 3", atr3, atr3[0], "");
-  const art4 = crearArticulo("Paper 4","adjunto 4", [], conferencia.getAutores()[2], ABSTRACT_GENERAL);
-  conferencia.getSessions()[index].agregarArticulo(art1,new Date("06/24/2024"))
-  conferencia.getSessions()[index].agregarArticulo(art2,new Date("06/24/2024"))
-  conferencia.getSessions()[index].agregarArticulo(art3,new Date("06/24/2024"))
-  conferencia.getSessions()[index].agregarArticulo(art4,new Date("06/24/2024"))
-  return conferencia
+  conferencia.addSession(newTrack);
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  const atr1 = conferencia.getAutores().slice(1, 2);
+  const atr2 = conferencia.getAutores().slice(1, 3);
+  const atr3 = conferencia.getAutores().slice(0, 1);
+  const art1 = crearArticulo(
+    "Paper 1",
+    "adjunto",
+    atr1,
+    atr1[0],
+    ABSTRACT_GENERAL
+  );
+  const art2 = crearArticulo(
+    "Paper 2",
+    "adjunto 2",
+    atr2,
+    atr2[0],
+    ABSTRACT_GENERAL
+  );
+  const art3 = crearArticulo("Paper 3", "adjunto 3", atr3, atr3[0], "");
+  const art4 = crearArticulo(
+    "Paper 4",
+    "adjunto 4",
+    [],
+    conferencia.getAutores()[2],
+    ABSTRACT_GENERAL
+  );
+  conferencia
+    .getSessions()
+    [index].agregarArticulo(art1, new Date("06/24/2024"));
+  conferencia
+    .getSessions()
+    [index].agregarArticulo(art2, new Date("06/24/2024"));
+  conferencia
+    .getSessions()
+    [index].agregarArticulo(art3, new Date("06/24/2024"));
+  conferencia
+    .getSessions()
+    [index].agregarArticulo(art4, new Date("06/24/2024"));
+  return conferencia;
 }
 
-function crearArticulo(titulo: string, adjunto: string, autores: Array<Usuario>, designado: Usuario, abstract: string) {
-  const newArticulo = new ArticuloRegular(titulo, adjunto, autores, designado, abstract)
-  return newArticulo
+function crearArticulo(
+  titulo: string,
+  adjunto: string,
+  autores: Array<Usuario>,
+  designado: Usuario,
+  abstract: string
+) {
+  const newArticulo = new ArticuloRegular(
+    titulo,
+    adjunto,
+    autores,
+    designado,
+    abstract
+  );
+  return newArticulo;
 }
 
 function crearConferencia() {
@@ -393,4 +531,4 @@ dtdfytbbtr
 horqreqrap 
 wizlyyvhfb 
 mtduakpcqw 
-enter`
+enter`;
