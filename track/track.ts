@@ -66,11 +66,11 @@ class Track {
             throw Error("User mismatch");
           }
           var potRev = this.revisores[potRevIndex];
-          const variance = potRevIndex < surplus;
+          const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
           const numArticles = variance
             ? numArticlesPerReviewer + 1
             : numArticlesPerReviewer;
-          if (potRev.getReviewLength() <= numArticles) {
+          if (potRev.getReviewLength() < numArticles) {
             potRev.addReview(this.articulos[i].getTitulo());
             revisoresFinal.push(potRev);
           }
@@ -89,11 +89,11 @@ class Track {
               throw Error("User mismatch");
             }
             var potRev = this.revisores[potRevIndex];
-            const variance = potRevIndex < surplus;
+            const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
             const numArticles = variance
               ? numArticlesPerReviewer + 1
               : numArticlesPerReviewer;
-            if (potRev.getReviewLength() <= numArticles) {
+            if (potRev.getReviewLength() < numArticles) {
               potRev.addReview(this.articulos[i].getTitulo());
               revisoresFinal.push(potRev);
             }
@@ -109,14 +109,11 @@ class Track {
         );
         for (let j = 0; j < filteredUsers.length; j++) {
           if (revisoresFinal.length < this.maxArticulos) {
-            const pos = this.revisores.findIndex(
-              (el) => el === filteredUsers[j]
-            );
-            const variance = pos < surplus;
+            const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
             const numArticles = variance
               ? numArticlesPerReviewer + 1
               : numArticlesPerReviewer;
-            if (filteredUsers[j].getReviewLength() <= numArticles) {
+            if (filteredUsers[j].getReviewLength() < numArticles) {
               filteredUsers[j].addReview(this.articulos[i].getTitulo());
               revisoresFinal.push(filteredUsers[j]);
             }
@@ -135,8 +132,7 @@ class Track {
             if (potRev === undefined) {
               throw Error("User mismatch");
             }
-            const pos = this.revisores.findIndex((el) => el === potRev);
-            const variance = pos < surplus;
+            const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
             const numArticles = variance
               ? numArticlesPerReviewer + 1
               : numArticlesPerReviewer;
@@ -151,6 +147,18 @@ class Track {
     }
   }
 
+  private sizeChecker(
+    numArticlesPerReviewer: number,
+    surplus: number
+  ): boolean {
+    var checker = 0;
+    this.revisores.forEach((el) => {
+      if (el.getReviewLength() >= numArticlesPerReviewer + 1) {
+        checker++;
+      }
+    });
+    return checker < surplus;
+  }
   private calculateArticlesPerReviewer() {
     return Math.floor((3 * this.articulos.length) / this.revisores.length);
   }

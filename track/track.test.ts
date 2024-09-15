@@ -217,6 +217,34 @@ test("Pasar a bidding, hacer bids y pasar a review con otro reviewer mas", () =>
   expect(revisor4.getReviewLength()).toBe(1);
 });
 
+test("Pasar a bidding, no hacer bids y pasar a review con otro reviewer mas", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index];
+  const profe = new Usuario("Profesor", "UBA", "probe@uba.edu.ar", "1234");
+  conferencia.addReviewer(profe);
+  expect(conferencia.getSessions()[index].getRevisores().length).toBe(4);
+  conferencia.getSessions()[index].avanzarEstado();
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = revisores[0];
+  const revisor2 = revisores[1];
+  const revisor3 = revisores[2];
+  const revisor4 = revisores[3];
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  expect(reviewers.length).toBe(3);
+  expect(reviewers2.length).toBe(3);
+  expect(revisor1.getReviewLength()).toBe(2);
+  expect(revisor2.getReviewLength()).toBe(2);
+  expect(revisor3.getReviewLength()).toBe(1);
+  expect(revisor4.getReviewLength()).toBe(1);
+});
+
 function baseSetup() {
   const fecha = new Date("06/24/2025");
   const conferencia = crearConferencia();
