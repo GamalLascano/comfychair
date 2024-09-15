@@ -23,9 +23,9 @@ class Conferencia {
   }
 
   public getSessions() {
-    return this.sesiones
+    return this.sesiones;
   }
-  
+
   public getChairs(): Array<Usuario> {
     return this.chairs;
   }
@@ -36,6 +36,12 @@ class Conferencia {
 
   public getAutores(): Array<Usuario> {
     return this.autores;
+  }
+
+  public addReviewer(reviewer: Usuario) {
+    this.sesiones.forEach((session) => {
+      session.addRevisor(reviewer);
+    });
   }
 }
 

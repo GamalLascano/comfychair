@@ -6,6 +6,7 @@ import { ArticuloRegular } from "../articles/articuloRegular";
 import { ArticuloState } from "../articles/articulo";
 import { ArticuloPoster } from "../articles/articuloPoster";
 import { CorteFijoStrategy } from "./strategy/corteFijoStrategy";
+import { InteresState } from "../articles/bids/bids";
 
 test("Crear conferencia", () => {
   const conferencia = crearConferencia();
@@ -16,13 +17,15 @@ test("Crear conferencia", () => {
 
 test("Crear Track", () => {
   const fecha = new Date("24-06-2025");
+  const conferencia = crearConferencia();
   const newTrack = new Track(
     "Session acerca de AI",
     fecha,
     3,
-    new CorteFijoStrategy(30)
+    new CorteFijoStrategy(30),
+    conferencia.getRevisores()
   );
-  const conferencia = crearConferencia();
+
   conferencia.addSession(newTrack);
   const index = conferencia
     .getSessions()
@@ -142,15 +145,88 @@ test("Crear Track con articulos y pasar a bidding", () => {
   expect(articulo2S.getEstado()).toBe(ArticuloState.BIDDING);
 });
 
+test("Pasar a bidding y hacer bids", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  expect(
+    conferencia.getSessions()[index].getArticulos()[0].getBids().length
+  ).toBe(2);
+});
+
+test("Pasar a bidding, hacer bids y pasar a review", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  expect(reviewers.length).toBe(3);
+  expect(reviewers2.length).toBe(3);
+});
+
+test("Pasar a bidding, hacer bids y pasar a review con otro reviewer mas", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index];
+  const profe = new Usuario("Profesor", "UBA", "probe@uba.edu.ar", "1234");
+  conferencia.addReviewer(profe);
+  expect(conferencia.getSessions()[index].getRevisores().length).toBe(4);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = revisores[0];
+  const revisor2 = revisores[1];
+  const revisor3 = revisores[2];
+  const revisor4 = revisores[3];
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.QUIZAS);
+  articulo1S.makeBid(revisor2, InteresState.NO_INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  expect(reviewers.length).toBe(3);
+  expect(reviewers2.length).toBe(3);
+  expect(revisor1.getReviewLength()).toBe(2);
+  expect(revisor2.getReviewLength()).toBe(1);
+  expect(revisor3.getReviewLength()).toBe(2);
+  expect(revisor4.getReviewLength()).toBe(1);
+});
+
 function baseSetup() {
   const fecha = new Date("06/24/2025");
+  const conferencia = crearConferencia();
   const newTrack = new Track(
     "Session acerca de AI",
     fecha,
     3,
-    new CorteFijoStrategy(30)
+    new CorteFijoStrategy(30),
+    conferencia.getRevisores()
   );
-  const conferencia = crearConferencia();
   conferencia.addSession(newTrack);
   const index = conferencia
     .getSessions()

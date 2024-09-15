@@ -34,12 +34,20 @@ export abstract class Articulo {
 
   public makeBid(user: Usuario, interes: InteresState) {
     const newBid = new Bids(user, interes);
+    var foundBid = this.bids.find((bid) => {
+      return user.getEmail() === bid.getRevisor().getEmail();
+    });
+    if (foundBid != undefined) {
+      this.bids = this.bids.filter((bid) => {
+        return user.getEmail() !== bid.getRevisor().getEmail();
+      });
+    }
     this.bids.push(newBid);
   }
 
   public modifyBid(user: Usuario, interes: InteresState) {
     var foundBid = this.bids.find((bid) => {
-      user == bid.getRevisor();
+      return user.getEmail() === bid.getRevisor().getEmail();
     });
     if (foundBid == undefined) {
       throw new Error("The bid was not found");
@@ -89,6 +97,10 @@ export abstract class Articulo {
     return this.revisores.length;
   }
 
+  public getRevisores() {
+    return this.revisores;
+  }
+
   public setRevisores(users: Usuario[]) {
     this.revisores = users;
   }
@@ -97,7 +109,7 @@ export abstract class Articulo {
     this.estado = estado;
   }
 
-  public getEstado(){
+  public getEstado() {
     return this.estado;
   }
 }

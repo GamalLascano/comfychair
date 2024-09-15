@@ -18,7 +18,8 @@ class Track {
     nombre: string,
     deadline: Date,
     maxArticulos: number,
-    formaSeleccion: Strategy
+    formaSeleccion: Strategy,
+    revisores: Usuario[]
   ) {
     this.nombre = nombre;
     this.deadline = deadline;
@@ -26,7 +27,7 @@ class Track {
     this.formaSeleccion = formaSeleccion;
     this.estado = TrackState.RECEPCION;
     this.articulos = [];
-    this.revisores = [];
+    this.revisores = revisores;
   }
 
   public avanzarEstado(): void {
@@ -41,7 +42,6 @@ class Track {
         break;
       case TrackState.ASIGNACION_REVISION:
         this.estado = TrackState.SELECCION;
-        this.seleccionarArticulos();
         break;
       case TrackState.SELECCION:
         console.log("Ya se llego al ultimo estado");
@@ -59,14 +59,14 @@ class Track {
           bid.getInteres() == InteresState.INTERESADO &&
           revisoresFinal.length < this.maxArticulos
         ) {
-          var potRev = this.revisores.find(
+          const potRevIndex = this.revisores.findIndex(
             (usr) => usr.getEmail() == bid.getRevisor().getEmail()
           );
-          if (potRev === undefined) {
+          if (potRevIndex == -1) {
             throw Error("User mismatch");
           }
-          const pos = this.revisores.findIndex((el) => el === potRev);
-          const variance = pos < surplus;
+          var potRev = this.revisores[potRevIndex];
+          const variance = potRevIndex < surplus;
           const numArticles = variance
             ? numArticlesPerReviewer + 1
             : numArticlesPerReviewer;
@@ -76,20 +76,20 @@ class Track {
           }
         }
       });
-      if (revisoresFinal.length <= this.maxArticulos) {
+      if (revisoresFinal.length < this.maxArticulos) {
         this.articulos[i].getBids().forEach((bid) => {
           if (
             bid.getInteres() == InteresState.QUIZAS &&
             revisoresFinal.length < this.maxArticulos
           ) {
-            var potRev = this.revisores.find(
+            const potRevIndex = this.revisores.findIndex(
               (usr) => usr.getEmail() == bid.getRevisor().getEmail()
             );
-            if (potRev === undefined) {
+            if (potRevIndex == -1) {
               throw Error("User mismatch");
             }
-            const pos = this.revisores.findIndex((el) => el === potRev);
-            const variance = pos < surplus;
+            var potRev = this.revisores[potRevIndex];
+            const variance = potRevIndex < surplus;
             const numArticles = variance
               ? numArticlesPerReviewer + 1
               : numArticlesPerReviewer;
@@ -100,15 +100,15 @@ class Track {
           }
         });
       }
-      if (revisoresFinal.length <= this.maxArticulos) {
+      if (revisoresFinal.length < this.maxArticulos) {
         const userFilter = this.articulos[i]
           .getBids()
           .map((el) => el.getRevisor().getEmail());
-        const filteredUsers = this.revisores.filter((el) =>
-          userFilter.includes(el.getEmail())
+        const filteredUsers = this.revisores.filter(
+          (el) => !userFilter.includes(el.getEmail())
         );
         for (let j = 0; j < filteredUsers.length; j++) {
-          if (revisoresFinal.length <= this.maxArticulos) {
+          if (revisoresFinal.length < this.maxArticulos) {
             const pos = this.revisores.findIndex(
               (el) => el === filteredUsers[j]
             );
@@ -123,7 +123,7 @@ class Track {
           }
         }
       }
-      if (revisoresFinal.length <= this.maxArticulos) {
+      if (revisoresFinal.length < this.maxArticulos) {
         this.articulos[i].getBids().forEach((bid) => {
           if (
             bid.getInteres() == InteresState.NO_INTERESADO &&
@@ -179,7 +179,15 @@ class Track {
     this.articulos = articulosOrdenados;
   }
 
-  private seleccionarArticulos() {
+  private seleccionarArticulos(): Articulo[] {
+    if (this.estado == TrackState.SELECCION) {
+      return this.formaSeleccion.filter(this.articulos);
+    } else {
+      throw new Error("The track is not in the selection stage");
+    }
+  }
+
+  private confirmarSeleccionArticulos() {
     this.articulos = this.formaSeleccion.filter(this.articulos);
   }
 
@@ -255,6 +263,14 @@ class Track {
 
   public getNombre() {
     return this.nombre;
+  }
+
+  public getRevisores() {
+    return this.revisores;
+  }
+
+  public addRevisor(reviewer: Usuario) {
+    this.revisores.push(reviewer);
   }
 }
 
