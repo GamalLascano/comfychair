@@ -23,22 +23,6 @@ export abstract class Articulo {
     this.autorNotificado = null;
   }
 
-  public constructor2(
-    titulo: string,
-    adjunto: string,
-    autores: Array<Usuario>,
-    autorNotificado: Usuario
-  ) {
-    this.titulo = titulo;
-    this.adjunto = adjunto;
-    this.autores = autores;
-    this.autorNotificado = autorNotificado;
-    this.estado = ArticuloState.RECIBIDO;
-    this.bids = [];
-    this.revision = [];
-    this.revisores = [];
-  }
-
   public getTitulo(): string {
     return this.titulo;
   }
