@@ -1,10 +1,9 @@
-import { expect, jest, test } from "@jest/globals";
+import { expect, test } from "@jest/globals";
 import Usuario from "../user/usuario";
 import Conferencia from "../conference/conferencia";
 import Track from "./track";
 import { ArticuloRegular } from "../articles/articuloRegular";
 import { ArticuloState } from "../articles/articulo";
-import { ArticuloPoster } from "../articles/articuloPoster";
 import { CorteFijoStrategy } from "./strategy/corteFijoStrategy";
 import { InteresState } from "../articles/bids/bids";
 import { MejoresStrategy } from "./strategy/mejoresStrategy";
@@ -162,6 +161,44 @@ test("Pasar a bidding y hacer bids", () => {
   expect(
     conferencia.getSessions()[index].getArticulos()[0].getBids().length
   ).toBe(2);
+});
+
+test("Pasar a bidding, hacer bids y modificar bid", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.NO_INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  const index2 = articulo1S.getBids().findIndex(el=>el.getRevisor().getEmail() == revisor1.getEmail())
+  expect(articulo1S.getBids()[index2].getInteres()).toBe(InteresState.NO_INTERESADO)
+  articulo1S.modifyBid(revisor1, InteresState.INTERESADO)
+  const index3 = articulo1S.getBids().findIndex(el=>el.getRevisor().getEmail() == revisor1.getEmail())
+  expect(articulo1S.getBids()[index3].getInteres()).toBe(InteresState.INTERESADO)
+});
+
+test("Pasar a bidding, hacer bids y intentar modificar bid no existente", () => {
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.NO_INTERESADO);
+  const tryModify = ()=>{
+    articulo1S.modifyBid(revisor2, InteresState.QUIZAS)
+  }
+  expect(tryModify).toThrowError("The bid was not found")
 });
 
 test("Pasar a bidding, hacer bids y pasar a review", () => {
