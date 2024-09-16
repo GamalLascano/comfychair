@@ -7,12 +7,23 @@ export abstract class Articulo {
   private adjunto: string;
   private bids: Array<Bids>;
   private autores: Array<Usuario>;
-  private autorNotificado: Usuario;
+  private autorNotificado: Usuario | null;
   private estado: ArticuloState;
   private revision: Array<Revision>;
   private revisores: Array<Usuario>;
 
-  public constructor(
+  public constructor(){
+    this.estado = ArticuloState.RECIBIDO;
+    this.bids = [];
+    this.revision = [];
+    this.revisores = [];
+    this.titulo = "";
+    this.adjunto = "";
+    this.autores = [];
+    this.autorNotificado = null;
+  }
+
+  public constructor2(
     titulo: string,
     adjunto: string,
     autores: Array<Usuario>,
@@ -123,6 +134,22 @@ export abstract class Articulo {
 
   public getEstado() {
     return this.estado;
+  }
+
+  public setAutores(autores: Array<Usuario>) {
+    this.autores = autores;
+  }
+
+  public setAutorNotificado(autor: Usuario) {
+    this.autorNotificado = autor;
+  }
+
+  public setAdjunto(adjunto: string) {
+    this.adjunto = adjunto;
+  }
+
+  public setTitulo(titulo: string) {
+    this.titulo = titulo;
   }
 }
 

@@ -8,6 +8,8 @@ import { ArticuloPoster } from "../articles/articuloPoster";
 import { CorteFijoStrategy } from "./strategy/corteFijoStrategy";
 import { InteresState } from "../articles/bids/bids";
 import { MejoresStrategy } from "./strategy/mejoresStrategy";
+import { ArticuloPosterBuilder } from "../articles/articuloPosterBuilder";
+import { ArticuloRegularBuilder } from "../articles/articuloRegularBuilder";
 
 test("Crear conferencia", () => {
   const conferencia = crearConferencia();
@@ -51,16 +53,14 @@ test("Crear Track con articulos y probar estados", () => {
   const articulo2 = conferencia.getSessions()[index].getArticulos()[1];
   const articulo3 = conferencia.getSessions()[index].getArticulos()[2];
   const articulo4 = conferencia.getSessions()[index].getArticulos()[3];
+  
   conferencia
     .getSessions()
     [index].agregarArticulo(
-      new ArticuloPoster(
-        "Paper 5",
-        "adjunto 5",
-        conferencia.getAutores(),
-        conferencia.getAutores()[2],
-        "segundo adjunto"
-      )
+      new ArticuloPosterBuilder().setTitulo("Paper 5")
+  .setAdjunto("adjunto 5").setAutores(conferencia.getAutores())
+  .setAutorNotificado(conferencia.getAutores()[2])
+  .setSegundoAdjunto("segundo adjunto").build()
     );
   const articulo5 = conferencia.getSessions()[index].getArticulos()[4];
   const artPasado = crearArticulo(
@@ -477,13 +477,10 @@ function crearArticulo(
   designado: Usuario,
   abstract: string
 ) {
-  const newArticulo = new ArticuloRegular(
-    titulo,
-    adjunto,
-    autores,
-    designado,
-    abstract
-  );
+  const newArticulo = new ArticuloRegularBuilder().setTitulo(titulo)
+  .setAdjunto(adjunto).setAutores(autores)
+  .setAutorNotificado(designado)
+  .setAbstract(abstract).build()
   return newArticulo;
 }
 
