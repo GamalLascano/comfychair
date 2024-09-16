@@ -44,8 +44,7 @@ class Track {
         this.estado = TrackState.SELECCION;
         break;
       case TrackState.SELECCION:
-        console.log("Ya se llego al ultimo estado");
-        break;
+        throw Error("Ya se llego al ultimo estado")
     }
   }
 
@@ -54,51 +53,9 @@ class Track {
     const surplus = this.calculateSurplus();
     for (let i = 0; i < this.articulos.length; i++) {
       var revisoresFinal: Array<Usuario> = [];
-      this.articulos[i].getBids().forEach((bid) => {
-        if (
-          bid.getInteres() == InteresState.INTERESADO &&
-          revisoresFinal.length < this.maxArticulos
-        ) {
-          const potRevIndex = this.revisores.findIndex(
-            (usr) => usr.getEmail() == bid.getRevisor().getEmail()
-          );
-          if (potRevIndex == -1) {
-            throw Error("User mismatch");
-          }
-          var potRev = this.revisores[potRevIndex];
-          const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
-          const numArticles = variance
-            ? numArticlesPerReviewer + 1
-            : numArticlesPerReviewer;
-          if (potRev.getReviewLength() < numArticles) {
-            potRev.addReview(this.articulos[i].getTitulo());
-            revisoresFinal.push(potRev);
-          }
-        }
-      });
+      this.findCandidates(revisoresFinal, i, numArticlesPerReviewer, surplus, InteresState.INTERESADO);
       if (revisoresFinal.length < this.maxArticulos) {
-        this.articulos[i].getBids().forEach((bid) => {
-          if (
-            bid.getInteres() == InteresState.QUIZAS &&
-            revisoresFinal.length < this.maxArticulos
-          ) {
-            const potRevIndex = this.revisores.findIndex(
-              (usr) => usr.getEmail() == bid.getRevisor().getEmail()
-            );
-            if (potRevIndex == -1) {
-              throw Error("User mismatch");
-            }
-            var potRev = this.revisores[potRevIndex];
-            const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
-            const numArticles = variance
-              ? numArticlesPerReviewer + 1
-              : numArticlesPerReviewer;
-            if (potRev.getReviewLength() < numArticles) {
-              potRev.addReview(this.articulos[i].getTitulo());
-              revisoresFinal.push(potRev);
-            }
-          }
-        });
+        this.findCandidates(revisoresFinal, i, numArticlesPerReviewer, surplus, InteresState.QUIZAS);
       }
       if (revisoresFinal.length < this.maxArticulos) {
         const userFilter = this.articulos[i]
@@ -121,30 +78,35 @@ class Track {
         }
       }
       if (revisoresFinal.length < this.maxArticulos) {
-        this.articulos[i].getBids().forEach((bid) => {
-          if (
-            bid.getInteres() == InteresState.NO_INTERESADO &&
-            revisoresFinal.length < this.maxArticulos
-          ) {
-            var potRev = this.revisores.find(
-              (usr) => usr.getEmail() == bid.getRevisor().getEmail()
-            );
-            if (potRev === undefined) {
-              throw Error("User mismatch");
-            }
-            const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
-            const numArticles = variance
-              ? numArticlesPerReviewer + 1
-              : numArticlesPerReviewer;
-            if (potRev.getReviewLength() <= numArticles) {
-              potRev.addReview(this.articulos[i].getTitulo());
-              revisoresFinal.push(potRev);
-            }
-          }
-        });
+        this.findCandidates(revisoresFinal, i, numArticlesPerReviewer, surplus, InteresState.NO_INTERESADO);
       }
       this.articulos[i].setRevisores(revisoresFinal);
     }
+  }
+
+  private findCandidates(revisoresFinal: Array<Usuario>, i: number, numArticlesPerReviewer: number, surplus: number, interes: InteresState){
+    this.articulos[i].getBids().forEach((bid) => {
+      if (
+        bid.getInteres() == interes &&
+        revisoresFinal.length < this.maxArticulos
+      ) {
+        const potRevIndex = this.revisores.findIndex(
+          (usr) => usr.getEmail() == bid.getRevisor().getEmail()
+        );
+        if (potRevIndex == -1) {
+          throw Error("User mismatch");
+        }
+        var potRev = this.revisores[potRevIndex];
+        const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
+        const numArticles = variance
+          ? numArticlesPerReviewer + 1
+          : numArticlesPerReviewer;
+        if (potRev.getReviewLength() < numArticles) {
+          potRev.addReview(this.articulos[i].getTitulo());
+          revisoresFinal.push(potRev);
+        }
+      }
+    });
   }
 
   private sizeChecker(
@@ -187,7 +149,7 @@ class Track {
     this.articulos = articulosOrdenados;
   }
 
-  private seleccionarArticulos(): Articulo[] {
+  public seleccionarArticulos(): Articulo[] {
     if (this.estado == TrackState.SELECCION) {
       return this.formaSeleccion.filter(this.articulos);
     } else {
@@ -195,7 +157,7 @@ class Track {
     }
   }
 
-  private confirmarSeleccionArticulos() {
+  public confirmarSeleccionArticulos() {
     this.articulos = this.formaSeleccion.filter(this.articulos);
   }
 
@@ -241,16 +203,6 @@ class Track {
     return this.articulos;
   }
 
-  public makeBid(user: Usuario, articulo: Articulo, interes: InteresState) {
-    const index = this.articulos.findIndex((el) => el === articulo);
-    this.articulos[index].makeBid(user, interes);
-  }
-
-  public modifyBid(user: Usuario, articulo: Articulo, interes: InteresState) {
-    const index = this.articulos.findIndex((el) => el === articulo);
-    this.articulos[index].modifyBid(user, interes);
-  }
-
   //Agregar cosas de extension
   private filtrarArticulo(articulo: Articulo): boolean {
     var verify = this.verifyGeneric(articulo);
@@ -279,6 +231,10 @@ class Track {
 
   public addRevisor(reviewer: Usuario) {
     this.revisores.push(reviewer);
+  }
+
+  public setFormaSeleccion(forma: Strategy) {
+    this.formaSeleccion = forma
   }
 }
 

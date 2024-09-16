@@ -61,12 +61,24 @@ export abstract class Articulo {
   }
 
   public makeReview(user: Usuario, puntuacion: number, descripcion: string) {
-    if (!(puntuacion >= -3 && puntuacion <= 3)) {
-      throw new Error("Puntuacion no valida");
+    const foundReviewer = this.revisores.find((reviewer) => {
+      return user.getEmail() === reviewer.getEmail();
+    });
+
+    if (foundReviewer == undefined) {
+      throw new Error("This user is not allowed to make a review");
     }
 
-    if (this.revision.length == 3) {
-      throw new Error("No se aceptan mas revisiones");
+    const foundReview = this.revision.find((review) => {
+      return user.getEmail() === review.getRevisor().getEmail();
+    });
+    
+    if (foundReview != undefined) {
+      throw new Error("This user already made a review");
+    }
+
+    if (!(puntuacion >= -3 && puntuacion <= 3)) {
+      throw new Error("Puntuacion no valida");
     }
 
     const revisionNueva = new Revision(user, puntuacion, descripcion);

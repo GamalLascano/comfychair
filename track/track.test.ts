@@ -7,6 +7,7 @@ import { ArticuloState } from "../articles/articulo";
 import { ArticuloPoster } from "../articles/articuloPoster";
 import { CorteFijoStrategy } from "./strategy/corteFijoStrategy";
 import { InteresState } from "../articles/bids/bids";
+import { MejoresStrategy } from "./strategy/mejoresStrategy";
 
 test("Crear conferencia", () => {
   const conferencia = crearConferencia();
@@ -22,7 +23,7 @@ test("Crear Track", () => {
     "Session acerca de AI",
     fecha,
     3,
-    new CorteFijoStrategy(30),
+    new CorteFijoStrategy(50),
     conferencia.getRevisores()
   );
 
@@ -245,6 +246,176 @@ test("Pasar a bidding, no hacer bids y pasar a review con otro reviewer mas", ()
   expect(revisor4.getReviewLength()).toBe(1);
 });
 
+test("Pasar a review, y puntuar",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  reviewers.forEach((reviewer)=>{
+    articulo1R.makeReview(reviewer, 3, "Excelente")
+  })
+  reviewers2.forEach((reviewer)=>{
+    articulo2R.makeReview(reviewer, 1, "Bueno")
+  })
+  expect(articulo1R.getPuntaje()).toBe(9)
+  expect(articulo2R.getPuntaje()).toBe(3)
+})
+
+test("Pasar a review, puntuar con un usuario no permitido",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const fakeReviewer = conferencia.getChairs()[0]
+  const fakeExecution = ()=>{
+    articulo1R.makeReview(fakeReviewer, 3, "Excelente")
+  }
+  expect(fakeExecution).toThrowError("This user is not allowed to make a review")
+})
+
+test("Pasar a review, puntuar con un puntaje no permitido",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const reviewers = articulo1R.getRevisores();
+  const fakeExecution = ()=>{
+    articulo1R.makeReview(reviewers[0], 4, "Excelente")
+  }
+  expect(fakeExecution).toThrowError("Puntuacion no valida")
+})
+
+test("Pasar a review, y puntuar de vuelta con un reviewer",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  reviewers.forEach((reviewer)=>{
+    articulo1R.makeReview(reviewer, 3, "Excelente")
+  })
+  reviewers2.forEach((reviewer)=>{
+    articulo2R.makeReview(reviewer, 1, "Bueno")
+  })
+  const fakeExecution = ()=>{
+    articulo1R.makeReview(reviewers[0], 3, "Excelente")
+  }
+  expect(fakeExecution).toThrowError("This user already made a review")
+})
+
+test("Pasar a seleccion, y filtrar",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  reviewers.forEach((reviewer)=>{
+    articulo1R.makeReview(reviewer, 3, "Excelente")
+  })
+  reviewers2.forEach((reviewer)=>{
+    articulo2R.makeReview(reviewer, 1, "Bueno")
+  })
+  conferencia.getSessions()[index].avanzarEstado();
+  const seleccionadosCorteFijo = conferencia.getSessions()[index].seleccionarArticulos()
+  expect(seleccionadosCorteFijo.length).toBe(1)
+  conferencia.getSessions()[index].setFormaSeleccion(new MejoresStrategy(2))
+  const seleccionadosMejores = conferencia.getSessions()[index].seleccionarArticulos()
+  expect(seleccionadosMejores.length).toBe(2)
+  conferencia.getSessions()[index].setFormaSeleccion(new CorteFijoStrategy(30))
+  const seleccionadosCorteFijo2 = conferencia.getSessions()[index].seleccionarArticulos()
+  expect(seleccionadosCorteFijo2.length).toBe(1)
+  conferencia.getSessions()[index].confirmarSeleccionArticulos()
+  expect(conferencia.getSessions()[index].getArticulos().length).toBe(1)
+})
+
+test("Pasar a seleccion, y pasarse de largo",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  reviewers.forEach((reviewer)=>{
+    articulo1R.makeReview(reviewer, 3, "Excelente")
+  })
+  reviewers2.forEach((reviewer)=>{
+    articulo2R.makeReview(reviewer, 1, "Bueno")
+  })
+  conferencia.getSessions()[index].avanzarEstado();
+  const intentarPasarAOtroEstado = ()=>{
+    conferencia.getSessions()[index].avanzarEstado();
+  }
+  expect(intentarPasarAOtroEstado).toThrowError("Ya se llego al ultimo estado")
+})
+
 function baseSetup() {
   const fecha = new Date("06/24/2025");
   const conferencia = crearConferencia();
@@ -252,7 +423,7 @@ function baseSetup() {
     "Session acerca de AI",
     fecha,
     3,
-    new CorteFijoStrategy(30),
+    new CorteFijoStrategy(50),
     conferencia.getRevisores()
   );
   conferencia.addSession(newTrack);
