@@ -12,4 +12,7 @@ export class ArticuloPoster extends Articulo{
         this.segundoAdjunto = segundoAdjunto;
     }
 
+    public getSegundoAdjunto() {
+        return this.segundoAdjunto;
+    }
 }
