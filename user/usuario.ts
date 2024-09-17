@@ -38,8 +38,8 @@ class Usuario {
     return this.email;
   }
 
-  public getPassword(): string {
-    return this.password;
+  public verifyPassword(password: string): boolean {
+    return this.password == password;
   }
 }
 

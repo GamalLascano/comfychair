@@ -6,6 +6,7 @@ import { ProjectUtils } from "../utils/projectUtils";
 import { Strategy } from "./strategy/strategy";
 
 class Track {
+  private static NUM_ARTICULOS_POR_REVIEWER = 3;
   private nombre: string;
   private articulos: Array<Articulo>;
   private deadline: Date;
@@ -54,10 +55,10 @@ class Track {
     for (let i = 0; i < this.articulos.length; i++) {
       var revisoresFinal: Array<Usuario> = [];
       this.findCandidates(revisoresFinal, i, numArticlesPerReviewer, surplus, InteresState.INTERESADO);
-      if (revisoresFinal.length < this.maxArticulos) {
+      if (revisoresFinal.length < Track.NUM_ARTICULOS_POR_REVIEWER) {
         this.findCandidates(revisoresFinal, i, numArticlesPerReviewer, surplus, InteresState.QUIZAS);
       }
-      if (revisoresFinal.length < this.maxArticulos) {
+      if (revisoresFinal.length < Track.NUM_ARTICULOS_POR_REVIEWER) {
         const userFilter = this.articulos[i]
           .getBids()
           .map((el) => el.getRevisor().getEmail());
@@ -65,7 +66,7 @@ class Track {
           (el) => !userFilter.includes(el.getEmail())
         );
         for (let j = 0; j < filteredUsers.length; j++) {
-          if (revisoresFinal.length < this.maxArticulos) {
+          if (revisoresFinal.length < Track.NUM_ARTICULOS_POR_REVIEWER) {
             const variance = this.sizeChecker(numArticlesPerReviewer, surplus);
             const numArticles = variance
               ? numArticlesPerReviewer + 1
@@ -77,7 +78,7 @@ class Track {
           }
         }
       }
-      if (revisoresFinal.length < this.maxArticulos) {
+      if (revisoresFinal.length < Track.NUM_ARTICULOS_POR_REVIEWER) {
         this.findCandidates(revisoresFinal, i, numArticlesPerReviewer, surplus, InteresState.NO_INTERESADO);
       }
       this.articulos[i].setRevisores(revisoresFinal);
@@ -88,7 +89,7 @@ class Track {
     this.articulos[i].getBids().forEach((bid) => {
       if (
         bid.getInteres() == interes &&
-        revisoresFinal.length < this.maxArticulos
+        revisoresFinal.length < Track.NUM_ARTICULOS_POR_REVIEWER
       ) {
         const potRevIndex = this.revisores.findIndex(
           (usr) => usr.getEmail() == bid.getRevisor().getEmail()
@@ -158,6 +159,10 @@ class Track {
   }
 
   public confirmarSeleccionArticulos() {
+    const finalResult = this.formaSeleccion.filter(this.articulos);
+    if (finalResult.length > this.maxArticulos){
+      throw new Error("The final result of the selection is higher than the maximum articles, try again");
+    }
     this.articulos = this.formaSeleccion.filter(this.articulos);
   }
 
@@ -235,6 +240,10 @@ class Track {
 
   public setFormaSeleccion(forma: Strategy) {
     this.formaSeleccion = forma
+  }
+
+  public setMaxArticles(max: number){
+    this.maxArticulos = max
   }
 }
 

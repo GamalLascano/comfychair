@@ -422,6 +422,46 @@ test("Pasar a seleccion, y filtrar",()=>{
   expect(conferencia.getSessions()[index].getArticulos().length).toBe(1)
 })
 
+test("Pasar a seleccion, y pasarse del maximo",()=>{
+  const conferencia = baseSetup();
+  const index = conferencia
+    .getSessions()
+    .findIndex((el) => el.getNombre() == "Session acerca de AI");
+  conferencia.getSessions()[index].setMaxArticles(0)
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1S = conferencia.getSessions()[index].getArticulos()[0];
+  const revisores = conferencia.getSessions()[index].getRevisores();
+  const revisor1 = conferencia.getSessions()[index].getRevisores()[0];
+  const revisor2 = conferencia.getSessions()[index].getRevisores()[1];
+  expect(revisores.length).toBe(3);
+  articulo1S.makeBid(revisor1, InteresState.INTERESADO);
+  articulo1S.makeBid(revisor2, InteresState.INTERESADO);
+  conferencia.getSessions()[index].avanzarEstado();
+  const articulo1R = conferencia.getSessions()[index].getArticulos()[0];
+  const articulo2R = conferencia.getSessions()[index].getArticulos()[1];
+  const reviewers = articulo1R.getRevisores();
+  const reviewers2 = articulo2R.getRevisores();
+  reviewers.forEach((reviewer)=>{
+    articulo1R.makeReview(reviewer, 3, "Excelente")
+  })
+  reviewers2.forEach((reviewer)=>{
+    articulo2R.makeReview(reviewer, 1, "Bueno")
+  })
+  conferencia.getSessions()[index].avanzarEstado();
+  const seleccionadosCorteFijo = conferencia.getSessions()[index].seleccionarArticulos()
+  expect(seleccionadosCorteFijo.length).toBe(1)
+  conferencia.getSessions()[index].setFormaSeleccion(new MejoresStrategy(2))
+  const seleccionadosMejores = conferencia.getSessions()[index].seleccionarArticulos()
+  expect(seleccionadosMejores.length).toBe(2)
+  conferencia.getSessions()[index].setFormaSeleccion(new CorteFijoStrategy(30))
+  const seleccionadosCorteFijo2 = conferencia.getSessions()[index].seleccionarArticulos()
+  expect(seleccionadosCorteFijo2.length).toBe(1)
+  const tryMaxArticles = ()=>{
+    conferencia.getSessions()[index].confirmarSeleccionArticulos()
+  }
+  expect(tryMaxArticles).toThrowError("The final result of the selection is higher than the maximum articles, try again")
+})
+
 test("Pasar a seleccion, y pasarse de largo",()=>{
   const conferencia = baseSetup();
   const index = conferencia
